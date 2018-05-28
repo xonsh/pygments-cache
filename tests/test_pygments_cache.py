@@ -4,7 +4,7 @@ import pytest
 import pygments_cache
 from pygments_cache import build_cache
 
-
+pygments_cache.DEBUG = True
 CACHE = None
 
 
@@ -24,6 +24,7 @@ def cache():
 @pytest.mark.parametrize('filename, modname, clsname', [
     ('.yaml', 'pygments.lexers.data', 'YamlLexer'),
     ('CMakeLists.txt', 'pygments.lexers.make', 'CMakeLexer'),
+    ('.py', 'pygments.lexers.python', 'Python3Lexer'),
     ])
 def test_lexer_exts(cache, filename, modname, clsname):
     obsmod, obscls = cache['lexers']['exts'][filename]

@@ -9,9 +9,11 @@ import importlib
 # Global storage variables
 __version__ = '0.0.0'
 CACHE = None
+DEBUG = False
 
 
 def _discover_lexers():
+    import sys
     import inspect
     from pygments.lexers import get_all_lexers, find_lexer_class
     # maps file extension (and names) to (module, classname) tuples
@@ -26,7 +28,23 @@ def _discover_lexers():
                 filename = filename[1:]
             if '*' in filename:
                 continue
+            if DEBUG and filename in exts:
+                msg = 'for {0}, ambiquity between {1}:{2} and {3}:{4}'
+                prev = exts[filename]
+                msg = msg.format(filename, prev[0], prev[1], val[0], val[1])
+                print(msg, file=sys.stderr)
             exts[filename] = val
+    # remove some ambiquity
+    exts.update({
+        '.py': ('pygments.lexers.python', 'Python3Lexer'),
+        '.pyw': ('pygments.lexers.python', 'Python3Lexer'),
+        '.sc': ('pygments.lexers.python', 'Python3Lexer'),
+        '.tac': ('pygments.lexers.python', 'Python3Lexer'),
+        'SConstruct': ('pygments.lexers.python', 'Python3Lexer'),
+        'SConscript': ('pygments.lexers.python', 'Python3Lexer'),
+        '.sage': ('pygments.lexers.python', 'Python3Lexer'),
+        '.pytb': ('pygments.lexers.python', 'Python3TracebackLexer'),
+        })
     return lexers
 
 
