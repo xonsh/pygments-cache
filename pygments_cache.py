@@ -17,8 +17,70 @@ def _discover_lexers():
     import inspect
     from pygments.lexers import get_all_lexers, find_lexer_class
     # maps file extension (and names) to (module, classname) tuples
+    default_exts = {
+        # C / C++
+        '.h': ('pygments.lexers.c_cpp', 'CLexer'),
+        '.hh': ('pygments.lexers.c_cpp', 'CppLexer'),
+        '.cp': ('pygments.lexers.c_cpp', 'CppLexer'),
+        # python
+        '.py': ('pygments.lexers.python', 'Python3Lexer'),
+        '.pyw': ('pygments.lexers.python', 'Python3Lexer'),
+        '.sc': ('pygments.lexers.python', 'Python3Lexer'),
+        '.tac': ('pygments.lexers.python', 'Python3Lexer'),
+        'SConstruct': ('pygments.lexers.python', 'Python3Lexer'),
+        'SConscript': ('pygments.lexers.python', 'Python3Lexer'),
+        '.sage': ('pygments.lexers.python', 'Python3Lexer'),
+        '.pytb': ('pygments.lexers.python', 'Python3TracebackLexer'),
+        # perl
+        '.t': ('pygments.lexers.perl', 'Perl6Lexer'),
+        '.pl': ('pygments.lexers.perl', 'Perl6Lexer'),
+        '.pm': ('pygments.lexers.perl', 'Perl6Lexer'),
+        # asm
+        '.s': ('pygments.lexers.asm', 'GasLexer'),
+        '.S': ('pygments.lexers.asm', 'GasLexer'),
+        '.asm': ('pygments.lexers.asm', 'NasmLexer'),
+        '.ASM': ('pygments.lexers.asm', 'NasmLexer'),
+        # Antlr
+        '.g': ('pygments.lexers.parsers', 'AntlrCppLexer'),
+        '.G': ('pygments.lexers.parsers', 'AntlrCppLexer'),
+        # XML
+        '.xml': ('pygments.lexers.html', 'XmlLexer'),
+        '.xsl': ('pygments.lexers.html', 'XsltLexer'),
+        '.xslt': ('pygments.lexers.html', 'XsltLexer'),
+        # ASP
+        '.axd': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        '.asax': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        '.ascx': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        '.ashx': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        '.asmx': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        '.aspx': ('pygments.lexers.dotnet', 'CSharpAspxLexer'),
+        # misc
+        '.b': ('pygments.lexers.esoteric', 'BrainfuckLexer'),
+        '.j': ('pygments.lexers.jvm', 'JasminLexer'),
+        '.m': ('pygments.lexers.matlab', 'MatlabLexer'),
+        '.n': ('pygments.lexers.dotnet', 'NemerleLexer'),
+        '.p': ('pygments.lexers.pawn', 'PawnLexer'),
+        '.v': ('pygments.lexers.theorem', 'CoqLexer'),
+        '.as': ('pygments.lexers.actionscript', 'ActionScript3Lexer'),
+        '.fs': ('pygments.lexers.forth', 'ForthLexer'),
+        '.hy': ('pygments.lexers.lisp', 'HyLexer'),
+        '.ts': ('pygments.lexers.javascript', 'TypeScriptLexer'),
+        '.rl': ('pygments.lexers.parsers', 'RagelCppLexer'),
+        '.bas': ('pygments.lexers.basic', 'QBasicLexer'),
+        '.bug': ('pygments.lexers.modeling', 'BugsLexer'),
+        '.ecl': ('pygments.lexers.ecl', 'ECLLexer'),
+        '.inc': ('pygments.lexers.php', 'PhpLexer'),
+        '.inf': ('pygments.lexers.configs', 'IniLexer'),
+        '.pro': ('pygments.lexers.prolog', 'PrologLexer'),
+        '.sql': ('pygments.lexers.sql', 'SqlLexer'),
+        '.txt': ('pygments.lexers.special', 'TextLexer'),
+        '.html': ('pygments.lexers.html', 'HtmlLexer'),
+        }
     exts = {}
     lexers = {'exts': exts}
+    if DEBUG:
+        from collections import defaultdict
+        duplicates = defaultdict(set)
     for longname, aliases, filenames, mimetypes in get_all_lexers():
         cls = find_lexer_class(longname)
         mod = inspect.getmodule(cls)
@@ -28,23 +90,20 @@ def _discover_lexers():
                 filename = filename[1:]
             if '*' in filename:
                 continue
-            if DEBUG and filename in exts:
-                msg = 'for {0}, ambiquity between {1}:{2} and {3}:{4}'
-                prev = exts[filename]
-                msg = msg.format(filename, prev[0], prev[1], val[0], val[1])
-                print(msg, file=sys.stderr)
+            if (DEBUG and filename in exts and exts[filename] != val
+                      and filename not in default_exts):
+                duplicates[filename].add(val)
+                duplicates[filename].add(exts[filename])
             exts[filename] = val
     # remove some ambiquity
-    exts.update({
-        '.py': ('pygments.lexers.python', 'Python3Lexer'),
-        '.pyw': ('pygments.lexers.python', 'Python3Lexer'),
-        '.sc': ('pygments.lexers.python', 'Python3Lexer'),
-        '.tac': ('pygments.lexers.python', 'Python3Lexer'),
-        'SConstruct': ('pygments.lexers.python', 'Python3Lexer'),
-        'SConscript': ('pygments.lexers.python', 'Python3Lexer'),
-        '.sage': ('pygments.lexers.python', 'Python3Lexer'),
-        '.pytb': ('pygments.lexers.python', 'Python3TracebackLexer'),
-        })
+    exts.update(default_exts)
+    # print dumplicate message
+    if DEBUG:
+        for filename, vals in sorted(duplicates.items()):
+            msg = 'for {0} ambiquity between:\n  '.format(filename)
+            vals = [m + ':' + c for m, c in vals]
+            msg += '\n  '.join(sorted(vals))
+            print(msg, file=sys.stderr)
     return lexers
 
 
