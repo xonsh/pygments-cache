@@ -1,9 +1,11 @@
 """A fast drop-in replacement for pygments get_*() and guess_*() funtions.
 """
 import os
+import importlib
 
 
 # Global storage variables
+__version__ = '0.0.0'
 CACHE = None
 
 
@@ -11,18 +13,18 @@ def _discover_lexers():
     import inspect
     from pygments.lexers import get_all_lexers, find_lexer_class
     # maps file extension (and names) to (module, classname) tuples
-    ext = {}
-    lexers = {'ext': ext}
+    exts = {}
+    lexers = {'exts': exts}
     for longname, aliases, filenames, mimetypes in get_all_lexers():
         cls = find_lexer_class(longname)
-        mod = inspect.getmodule(c)
+        mod = inspect.getmodule(cls)
         val = (mod.__name__, cls.__name__)
         for filename in filenames:
             if filename.startswith('*.'):
                 filename = filename[1:]
             if '*' in filename:
                 continue
-            ext[filename] = val
+            exts[filename] = val
     return lexers
 
 
@@ -59,6 +61,10 @@ def load(filename):
 
 def write_cache(filename):
     """Writes the current cache to the file"""
+    from pprint import pformat
+    s = pformat(cache)
+    with open(filename, 'w') as f:
+        f.write(s)
 
 
 def load_or_build():
@@ -76,3 +82,36 @@ def load_or_build():
         print('...writing cache to ' + fname, file=sys.stderr)
         write_cache(fname)
 
+#
+# pygments interface
+#
+
+def get_lexer_for_filename(filename, text='', **options):
+    """Gets a lexer from a filename (usually via the filename extension).
+    This mimics the behavior of ``pygments.lexers.get_lexer_for_filename()``
+    and ``pygments.lexers.guess_lexer_for_filename()``.
+    """
+    if CACHE is None:
+        load_or_build()
+    exts = CACHE['lexers']['exts']
+    fname = os.path.basename(filename)
+    key = if fname in exts else os.path.splitext(fname)[1]
+    if key in exts:
+        modname, clsname = exts[key]
+        mod = importlib.import_module(modname)
+        cls = getattr(mod, clsname)
+        lexer = cls()
+    else:
+        # couldn't find lexer in cache, fallback to the hard way
+        import inspect
+        from pygments.lexers import guess_lexer_for_filename
+        lexer = guess_lexer_for_filename(filename, text, **options)
+        # add this filename to the cache for future use
+        cls = type(lexer)
+        mod = inspect.getmodule(cls)
+        exts[fname] = (mod.__name__, cls.__name__)
+        write_cache(cache_filename())
+    return lexer
+
+
+guess_lexer_for_filename = get_lexer_for_filename
