@@ -1,4 +1,6 @@
-"""A fast drop-in replacement for pygments get_*() and guess_*() funtions.
+"""A fast drop-in replacement for pygments ``get_*()`` and ``guess_*()`` funtions.
+
+The cache itself is stor
 """
 import os
 import importlib
@@ -95,7 +97,7 @@ def get_lexer_for_filename(filename, text='', **options):
         load_or_build()
     exts = CACHE['lexers']['exts']
     fname = os.path.basename(filename)
-    key = if fname in exts else os.path.splitext(fname)[1]
+    key = fname if fname in exts else os.path.splitext(fname)[1]
     if key in exts:
         modname, clsname = exts[key]
         mod = importlib.import_module(modname)
