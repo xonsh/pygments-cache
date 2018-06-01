@@ -12,8 +12,16 @@ CACHE = None
 DEBUG = False
 
 
-def _discover_lexers():
+def _print_duplicate_message(duplicates):
     import sys
+    for filename, vals in sorted(duplicates.items()):
+        msg = 'for {0} ambiquity between:\n  '.format(filename)
+        vals = [m + ':' + c for m, c in vals]
+        msg += '\n  '.join(sorted(vals))
+        print(msg, file=sys.stderr)
+
+
+def _discover_lexers():
     import inspect
     from pygments.lexers import get_all_lexers, find_lexer_class
     # maps file extension (and names) to (module, classname) tuples
@@ -97,20 +105,48 @@ def _discover_lexers():
             exts[filename] = val
     # remove some ambiquity
     exts.update(default_exts)
+    # print duplicate message
+    if DEBUG:
+        _print_duplicate_message(duplicates)
+    return lexers
+
+
+def _discover_formatters():
+    import inspect
+    from pygments.formatters import get_all_formatters
+    # maps file extension (and names) to (module, classname) tuples
+    default_exts = {}
+    exts = {}
+    formatters = {'exts': exts}
+    if DEBUG:
+        from collections import defaultdict
+        duplicates = defaultdict(set)
+    for cls in get_all_formatters():
+        mod = inspect.getmodule(cls)
+        val = (mod.__name__, cls.__name__)
+        for filename in cls.filenames:
+            if filename.startswith('*.'):
+                filename = filename[1:]
+            if '*' in filename:
+                continue
+            if (DEBUG and filename in exts and exts[filename] != val
+                      and filename not in default_exts):
+                duplicates[filename].add(val)
+                duplicates[filename].add(exts[filename])
+            exts[filename] = val
+    # remove some ambiquity
+    exts.update(default_exts)
     # print dumplicate message
     if DEBUG:
-        for filename, vals in sorted(duplicates.items()):
-            msg = 'for {0} ambiquity between:\n  '.format(filename)
-            vals = [m + ':' + c for m, c in vals]
-            msg += '\n  '.join(sorted(vals))
-            print(msg, file=sys.stderr)
-    return lexers
+        _print_duplicate_message(duplicates)
+    return formatters
 
 
 def build_cache():
     """Does the hard work of building a cache from nothing."""
     cache = {}
     cache['lexers'] = _discover_lexers()
+    cache['formatters'] = _discover_formatters()
     return cache
 
 
@@ -161,6 +197,7 @@ def load_or_build():
         print('...writing cache to ' + fname, file=sys.stderr)
         write_cache(fname)
 
+
 #
 # pygments interface
 #
@@ -194,3 +231,29 @@ def get_lexer_for_filename(filename, text='', **options):
 
 
 guess_lexer_for_filename = get_lexer_for_filename
+
+
+def get_formatter_for_filename(fn, **options):
+    """Gets a sformatter class from a filename (usually via the filename
+    extension). This mimics the behavior of
+    ``pygments.formatters.get_formatter_for_filename()``.
+    """
+    if CACHE is None:
+        load_or_build()
+    exts = CACHE['formatters']['exts']
+    fname = os.path.basename(fn)
+    key = fname if fname in exts else os.path.splitext(fname)[1]
+    if key in exts:
+        modname, clsname = exts[key]
+        mod = importlib.import_module(modname)
+        cls = getattr(mod, clsname)
+    else:
+        # couldn't find lexer in cache, fallback to the hard way
+        import inspect
+        from pygments.formatters import get_formatter_for_filename
+        cls = get_formatter_for_filename(fn, **options)
+        # add this filename to the cache for future use
+        mod = inspect.getmodule(cls)
+        exts[fname] = (mod.__name__, cls.__name__)
+        write_cache(cache_filename())
+    return cls
