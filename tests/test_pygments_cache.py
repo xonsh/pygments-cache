@@ -30,3 +30,24 @@ def test_lexer_exts(cache, filename, modname, clsname):
     obsmod, obscls = cache['lexers']['exts'][filename]
     assert modname == obsmod
     assert clsname == obscls
+
+
+@pytest.mark.parametrize('filename, modname, clsname', [
+    ('.txt', 'pygments.formatters.other', 'NullFormatter'),
+    ('.tex', 'pygments.formatters.latex', 'LatexFormatter'),
+    ])
+def test_formatter_exts(cache, filename, modname, clsname):
+    obsmod, obscls = cache['formatters']['exts'][filename]
+    assert modname == obsmod
+    assert clsname == obscls
+
+
+@pytest.mark.parametrize('filename, modname, clsname', [
+    ('text', 'pygments.formatters.other', 'NullFormatter'),
+    ('tex', 'pygments.formatters.latex', 'LatexFormatter'),
+    ('latex', 'pygments.formatters.latex', 'LatexFormatter'),
+    ])
+def test_formatter_names(cache, filename, modname, clsname):
+    obsmod, obscls = cache['formatters']['names'][filename]
+    assert modname == obsmod
+    assert clsname == obscls

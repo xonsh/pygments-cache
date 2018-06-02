@@ -117,13 +117,17 @@ def _discover_formatters():
     # maps file extension (and names) to (module, classname) tuples
     default_exts = {}
     exts = {}
-    formatters = {'exts': exts}
+    # maps formatter 'name' (not the class name) and alias to (module, classname) tuples
+    default_names = {}
+    names = {}
+    formatters = {'exts': exts, 'names': names}
     if DEBUG:
         from collections import defaultdict
         duplicates = defaultdict(set)
     for cls in get_all_formatters():
         mod = inspect.getmodule(cls)
         val = (mod.__name__, cls.__name__)
+        # add extentions
         for filename in cls.filenames:
             if filename.startswith('*.'):
                 filename = filename[1:]
@@ -134,8 +138,44 @@ def _discover_formatters():
                 duplicates[filename].add(val)
                 duplicates[filename].add(exts[filename])
             exts[filename] = val
+        # add names and aliases
+        names[cls.name] = val
+        for alias in cls.aliases:
+            if (DEBUG and alias in names and names[alias] != val
+                      and alias not in default_names):
+                duplicates[alias].add(val)
+                duplicates[alias].add(names[alias])
+            names[alias] = val
     # remove some ambiquity
     exts.update(default_exts)
+    names.update(default_names)
+    # print dumplicate message
+    if DEBUG:
+        _print_duplicate_message(duplicates)
+    return formatters
+
+
+def _discover_styles():
+    import inspect
+    from pygments.styles import get_all_styles, get_style_by_name
+    # maps style 'name' (not the class name) and alias to (module, classname) tuples
+    default_names = {}
+    names = {}
+    formatters = {'names': names}
+    if DEBUG:
+        from collections import defaultdict
+        duplicates = defaultdict(set)
+    for name in get_all_styles():
+        cls = get_style_by_name(name)
+        mod = inspect.getmodule(cls)
+        val = (mod.__name__, cls.__name__)
+        if (DEBUG and name in names and names[name] != val
+                  and name not in default_names):
+            duplicates[name].add(val)
+            duplicates[name].add(names[alias])
+        names[name] = val
+    # remove some ambiquity
+    names.update(default_names)
     # print dumplicate message
     if DEBUG:
         _print_duplicate_message(duplicates)
@@ -147,6 +187,7 @@ def build_cache():
     cache = {}
     cache['lexers'] = _discover_lexers()
     cache['formatters'] = _discover_formatters()
+    cache['styles'] = _discover_styles()
     return cache
 
 
@@ -234,7 +275,7 @@ guess_lexer_for_filename = get_lexer_for_filename
 
 
 def get_formatter_for_filename(fn, **options):
-    """Gets a sformatter class from a filename (usually via the filename
+    """Gets a formatter instance from a filename (usually via the filename
     extension). This mimics the behavior of
     ``pygments.formatters.get_formatter_for_filename()``.
     """
@@ -247,13 +288,63 @@ def get_formatter_for_filename(fn, **options):
         modname, clsname = exts[key]
         mod = importlib.import_module(modname)
         cls = getattr(mod, clsname)
+        formatter = cls()
     else:
-        # couldn't find lexer in cache, fallback to the hard way
+        # couldn't find formatter in cache, fallback to the hard way
         import inspect
         from pygments.formatters import get_formatter_for_filename
-        cls = get_formatter_for_filename(fn, **options)
+        formatter = get_formatter_for_filename(fn, **options)
         # add this filename to the cache for future use
+        cls = type(formatter)
         mod = inspect.getmodule(cls)
         exts[fname] = (mod.__name__, cls.__name__)
         write_cache(cache_filename())
-    return cls
+    return formatter
+
+
+def get_formatter_by_name(alias, **options):
+    """Gets a formatter instance from its name or alias.
+    This mimics the behavior of ``pygments.formatters.get_formatter_by_name()``.
+    """
+    if CACHE is None:
+        load_or_build()
+    names = CACHE['formatters']['names']
+    if alias in names:
+        modname, clsname = names[alias]
+        mod = importlib.import_module(modname)
+        cls = getattr(mod, clsname)
+        formatter = cls()
+    else:
+        # couldn't find formatter in cache, fallback to the hard way
+        import inspect
+        from pygments.formatters import get_formatter_by_name
+        formatter = get_formatter_by_name(alias, **options)
+        # add this filename to the cache for future use
+        cls = type(formatter)
+        mod = inspect.getmodule(cls)
+        names[alias] = (mod.__name__, cls.__name__)
+        write_cache(cache_filename())
+    return formatter
+
+
+def get_style_by_name(name):
+    """Gets a style class from its name or alias.
+    This mimics the behavior of ``pygments.styles.get_style_by_name()``.
+    """
+    if CACHE is None:
+        load_or_build()
+    names = CACHE['styles']['names']
+    if name in names:
+        modname, clsname = names[name]
+        mod = importlib.import_module(modname)
+        style = getattr(mod, clsname)
+    else:
+        # couldn't find style in cache, fallback to the hard way
+        import inspect
+        from pygments.styles import get_style_by_name
+        style = get_style_by_name(name)
+        # add this style to the cache for future use
+        mod = inspect.getmodule(style)
+        names[name] = (mod.__name__, cls.__name__)
+        write_cache(cache_filename())
+    return style
