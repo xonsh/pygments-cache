@@ -42,12 +42,22 @@ def test_formatter_exts(cache, filename, modname, clsname):
     assert clsname == obscls
 
 
-@pytest.mark.parametrize('filename, modname, clsname', [
+@pytest.mark.parametrize('name, modname, clsname', [
     ('text', 'pygments.formatters.other', 'NullFormatter'),
     ('tex', 'pygments.formatters.latex', 'LatexFormatter'),
     ('latex', 'pygments.formatters.latex', 'LatexFormatter'),
     ])
-def test_formatter_names(cache, filename, modname, clsname):
-    obsmod, obscls = cache['formatters']['names'][filename]
+def test_formatter_names(cache, name, modname, clsname):
+    obsmod, obscls = cache['formatters']['names'][name]
+    assert modname == obsmod
+    assert clsname == obscls
+
+
+@pytest.mark.parametrize('name, modname, clsname', [
+    ('murphy', 'pygments.styles.murphy', 'MurphyStyle'),
+    ('monokai', 'pygments.styles.monokai', 'MonokaiStyle'),
+    ])
+def test_style_names(cache, name, modname, clsname):
+    obsmod, obscls = cache['styles']['names'][name]
     assert modname == obsmod
     assert clsname == obscls
