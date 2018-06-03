@@ -1,6 +1,15 @@
-"""A fast drop-in replacement for pygments ``get_*()`` and ``guess_*()`` funtions.
+"""A fast, drop-in replacement for pygments ``get_*()`` and ``guess_*()`` funtions.
 
-The cache itself is stor
+The following pygments API functions are currently supplied here::
+
+    from pygments_cache import get_lexer_for_filename, guess_lexer_for_filename
+    from pygments_cache import get_formatter_for_filename, get_formatter_by_name
+    from pygments_cache import get_style_by_name
+    from pygments_cache import get_filter_by_name
+
+The cache itself is stored at the location given by the ``$PYGMENTS_CACHE_FILE``
+environment variable, or by default at ``~/.local/share/pygments-cache/cache.py``.
+The cache file is created on first use, if it does not already exist.
 """
 import os
 import importlib
@@ -247,7 +256,7 @@ def load(filename):
 def write_cache(filename):
     """Writes the current cache to the file"""
     from pprint import pformat
-    s = pformat(cache)
+    s = pformat(CACHE)
     with open(filename, 'w') as f:
         f.write(s)
 
