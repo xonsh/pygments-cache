@@ -158,10 +158,10 @@ def _discover_formatters():
 def _discover_styles():
     import inspect
     from pygments.styles import get_all_styles, get_style_by_name
-    # maps style 'name' (not the class name) and alias to (module, classname) tuples
+    # maps style 'name' (not the class name) and aliases to (module, classname) tuples
     default_names = {}
     names = {}
-    formatters = {'names': names}
+    styles = {'names': names}
     if DEBUG:
         from collections import defaultdict
         duplicates = defaultdict(set)
@@ -172,14 +172,42 @@ def _discover_styles():
         if (DEBUG and name in names and names[name] != val
                   and name not in default_names):
             duplicates[name].add(val)
-            duplicates[name].add(names[alias])
+            duplicates[name].add(names[name])
         names[name] = val
     # remove some ambiquity
     names.update(default_names)
     # print dumplicate message
     if DEBUG:
         _print_duplicate_message(duplicates)
-    return formatters
+    return styles
+
+
+def _discover_filters():
+    import inspect
+    from pygments.filters import get_all_filters, get_filter_by_name
+    # maps filter 'name' (not the class name) to (module, classname) tuples
+    default_names = {}
+    names = {}
+    filters = {'names': names}
+    if DEBUG:
+        from collections import defaultdict
+        duplicates = defaultdict(set)
+    for name in get_all_filters():
+        filter = get_filter_by_name(name)
+        cls = type(filter)
+        mod = inspect.getmodule(cls)
+        val = (mod.__name__, cls.__name__)
+        if (DEBUG and name in names and names[name] != val
+                  and name not in default_names):
+            duplicates[name].add(val)
+            duplicates[name].add(names[name])
+        names[name] = val
+    # remove some ambiquity
+    names.update(default_names)
+    # print dumplicate message
+    if DEBUG:
+        _print_duplicate_message(duplicates)
+    return filters
 
 
 def build_cache():
@@ -188,6 +216,7 @@ def build_cache():
     cache['lexers'] = _discover_lexers()
     cache['formatters'] = _discover_formatters()
     cache['styles'] = _discover_styles()
+    cache['filters'] = _discover_filters()
     return cache
 
 
@@ -257,7 +286,7 @@ def get_lexer_for_filename(filename, text='', **options):
         modname, clsname = exts[key]
         mod = importlib.import_module(modname)
         cls = getattr(mod, clsname)
-        lexer = cls()
+        lexer = cls(**options)
     else:
         # couldn't find lexer in cache, fallback to the hard way
         import inspect
@@ -288,7 +317,7 @@ def get_formatter_for_filename(fn, **options):
         modname, clsname = exts[key]
         mod = importlib.import_module(modname)
         cls = getattr(mod, clsname)
-        formatter = cls()
+        formatter = cls(**options)
     else:
         # couldn't find formatter in cache, fallback to the hard way
         import inspect
@@ -313,7 +342,7 @@ def get_formatter_by_name(alias, **options):
         modname, clsname = names[alias]
         mod = importlib.import_module(modname)
         cls = getattr(mod, clsname)
-        formatter = cls()
+        formatter = cls(**options)
     else:
         # couldn't find formatter in cache, fallback to the hard way
         import inspect
@@ -348,3 +377,28 @@ def get_style_by_name(name):
         names[name] = (mod.__name__, cls.__name__)
         write_cache(cache_filename())
     return style
+
+
+def get_filter_by_name(filtername, **options):
+    """Gets a filter instance from its name. This mimics the behavior of
+    ``pygments.filters.get_filtere_by_name()``.
+    """
+    if CACHE is None:
+        load_or_build()
+    names = CACHE['filters']['names']
+    if filtername in names:
+        modname, clsname = names[filtername]
+        mod = importlib.import_module(modname)
+        cls = getattr(mod, clsname)
+        filter = cls(**options)
+    else:
+        # couldn't find style in cache, fallback to the hard way
+        import inspect
+        from pygments.filters import get_filter_by_name
+        filter = get_filter_by_name(filtername, **options)
+        # add this filter to the cache for future use
+        cls = type(filter)
+        mod = inspect.getmodule(cls)
+        names[name] = (mod.__name__, cls.__name__)
+        write_cache(cache_filename())
+    return filter

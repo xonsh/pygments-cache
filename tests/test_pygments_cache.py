@@ -61,3 +61,13 @@ def test_style_names(cache, name, modname, clsname):
     obsmod, obscls = cache['styles']['names'][name]
     assert modname == obsmod
     assert clsname == obscls
+
+
+@pytest.mark.parametrize('name, modname, clsname', [
+    ('gobble', 'pygments.filters', 'GobbleFilter'),
+    ('highlight', 'pygments.filters', 'NameHighlightFilter'),
+    ])
+def test_filter_names(cache, name, modname, clsname):
+    obsmod, obscls = cache['filters']['names'][name]
+    assert modname == obsmod
+    assert clsname == obscls
