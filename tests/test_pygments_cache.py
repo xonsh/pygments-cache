@@ -98,7 +98,7 @@ def test_filter_names(cache, name, modname, clsname):
 def test_load_or_build():
     # prep for test
     temp_dir = tempfile.TemporaryDirectory()
-    cache_file = os.path.join(temp_dir.name, 'cache.py')
+    cache_file = os.path.join(temp_dir.name, 'pc', 'cache.py')
     os.environ['PYGMENTS_CACHE_FILE'] = cache_file
     pygments_cache.CACHE = None
     # first test building and writing cache

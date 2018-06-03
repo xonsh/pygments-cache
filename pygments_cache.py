@@ -256,6 +256,8 @@ def load(filename):
 def write_cache(filename):
     """Writes the current cache to the file"""
     from pprint import pformat
+    d = os.path.dirname(filename)
+    os.makedirs(d, exist_ok=True)
     s = pformat(CACHE)
     with open(filename, 'w') as f:
         f.write(s)
