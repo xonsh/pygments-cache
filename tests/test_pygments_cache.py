@@ -4,8 +4,20 @@ import tempfile
 
 import pytest
 
+from pygments.lexers.data import YamlLexer
+from pygments.lexers.make import CMakeLexer
+from pygments.lexers.python import Python3Lexer
+from pygments.formatters.other import NullFormatter
+from pygments.formatters.latex import LatexFormatter
+from pygments.styles.murphy import MurphyStyle
+from pygments.styles.monokai import MonokaiStyle
+from pygments.filters import GobbleFilter, NameHighlightFilter
+
 import pygments_cache
-from pygments_cache import build_cache, load_or_build, get_lexer_for_filename
+from pygments_cache import (build_cache, load_or_build, get_lexer_for_filename,
+    get_formatter_for_filename, get_formatter_by_name, get_style_by_name,
+    get_filter_by_name)
+
 
 pygments_cache.DEBUG = True
 CACHE = None
@@ -112,5 +124,53 @@ def test_load_or_build():
 # Test API
 #
 
-def test_get_lexer_for_filename():
-    pass
+@pytest.mark.parametrize('filename, cls', [
+    ('.yaml', YamlLexer),
+    ('CMakeLists.txt', CMakeLexer),
+    ('.py', Python3Lexer),
+    ('my.py', Python3Lexer),
+    ])
+def test_get_lexer_for_filename(cache, filename, cls):
+    lexer = get_lexer_for_filename(filename)
+    obs = type(lexer)
+    assert cls is obs
+
+
+@pytest.mark.parametrize('filename, cls', [
+    ('readme.txt', NullFormatter),
+    ('doc.tex', LatexFormatter),
+    ])
+def test_get_formatter_for_filename(cache, filename, cls):
+    lexer = get_formatter_for_filename(filename)
+    obs = type(lexer)
+    assert cls is obs
+
+
+@pytest.mark.parametrize('name, cls', [
+    ('text', NullFormatter),
+    ('tex', LatexFormatter),
+    ('latex', LatexFormatter),
+    ])
+def test_get_formatter_by_name(cache, name, cls):
+    lexer = get_formatter_by_name(name)
+    obs = type(lexer)
+    assert cls is obs
+
+
+@pytest.mark.parametrize('name, cls', [
+    ('murphy', MurphyStyle),
+    ('monokai', MonokaiStyle),
+    ])
+def test_get_style_by_name(cache, name, cls):
+    obs = get_style_by_name(name)
+    assert cls is obs
+
+
+@pytest.mark.parametrize('name, cls', [
+    ('gobble', GobbleFilter),
+    ('highlight', NameHighlightFilter),
+    ])
+def test_get_filter_by_name(cache, name, cls):
+    lexer = get_filter_by_name(name)
+    obs = type(lexer)
+    assert cls is obs
