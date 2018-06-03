@@ -3,7 +3,7 @@ $GITHUB_ORG = 'xonsh'
 
 $ACTIVITIES = ['version_bump', 'changelog',
                'tag', 'push_tag', 'pypi',
-               'ghrelease']
+               'ghrelease', 'conda_forge']
 
 $VERSION_BUMP_PATTERNS = [
     ('pygments_cache.py', '__version__\s*=.*', "__version__ = '$VERSION'"),
