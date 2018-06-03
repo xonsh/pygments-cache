@@ -10,6 +10,8 @@ The following pygments API functions are currently supplied here::
 The cache itself is stored at the location given by the ``$PYGMENTS_CACHE_FILE``
 environment variable, or by default at ``~/.local/share/pygments-cache/cache.py``.
 The cache file is created on first use, if it does not already exist.
+
+
 """
 import os
 import importlib

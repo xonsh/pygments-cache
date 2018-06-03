@@ -12,7 +12,7 @@ VERSION = '0.0.0'
 
 setup_kwargs = {
     "version": VERSION,
-    "description": ('A fast drop-in replacement for pygments `get_*()` and `guess_*()` funtions'),
+    "description": ('A fast, drop-in replacement for pygments `get_*()` and `guess_*()` funtions'),
     "license": 'BSD 3-clause',
     "author": 'The xonsh developers',
     "author_email": 'xonsh@googlegroups.com',

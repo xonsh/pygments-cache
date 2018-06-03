@@ -26,6 +26,9 @@ function.
 
 The cache itself is fully accessible as the ``pygments_cache.CACHE`` dict.
 
+This project is implement as single file, making it easy to redistribute.
+Feel free to copy this file to your own project!
+
 Comparison
 ----------
 **NOTE:** All of the following tests were in `xonsh <http://xon.sh>`_.
