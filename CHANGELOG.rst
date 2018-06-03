@@ -4,6 +4,17 @@ pygments-cache Change Log
 
 .. current developments
 
+v0.1.1
+====================
+
+**Fixed:**
+
+* Fixed missing variable name issues in ``get_style_by_name()`` and
+  ``get_filter_by_name()``.
+
+
+
+
 v0.1.0
 ====================
 
