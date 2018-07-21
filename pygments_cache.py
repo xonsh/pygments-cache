@@ -4,7 +4,7 @@ The following pygments API functions are currently supplied here::
 
     from pygments_cache import get_lexer_for_filename, guess_lexer_for_filename
     from pygments_cache import get_formatter_for_filename, get_formatter_by_name
-    from pygments_cache import get_style_by_name
+    from pygments_cache import get_style_by_name, get_all_styles
     from pygments_cache import get_filter_by_name
 
 The cache itself is stored at the location given by the ``$PYGMENTS_CACHE_FILE``
@@ -390,6 +390,15 @@ def get_style_by_name(name):
         names[name] = (mod.__name__, style.__name__)
         write_cache(cache_filename())
     return style
+
+
+def get_all_styles():
+    """Iterable through all known style names.
+    This mimics the behavior of ``pygments.styles.get_all_styles``.
+    """
+    if CACHE is None:
+        load_or_build()
+    yield from CACHE['styles']['names']
 
 
 def get_filter_by_name(filtername, **options):
