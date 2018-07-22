@@ -4,6 +4,16 @@ pygments-cache Change Log
 
 .. current developments
 
+v0.1.2
+====================
+
+**Added:**
+
+* Added ``get_all_styles()`` function for fast loading of style names.
+
+
+
+
 v0.1.1
 ====================
 
