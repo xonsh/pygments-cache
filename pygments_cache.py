@@ -403,7 +403,7 @@ def get_all_styles():
 
 def get_filter_by_name(filtername, **options):
     """Gets a filter instance from its name. This mimics the behavior of
-    ``pygments.filters.get_filtere_by_name()``.
+    ``pygments.filters.get_filter_by_name()``.
     """
     if CACHE is None:
         load_or_build()
