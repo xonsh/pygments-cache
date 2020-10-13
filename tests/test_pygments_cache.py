@@ -16,7 +16,7 @@ from pygments.filters import GobbleFilter, NameHighlightFilter
 import pygments_cache
 from pygments_cache import (build_cache, load_or_build, get_lexer_for_filename,
     get_formatter_for_filename, get_formatter_by_name, get_style_by_name,
-    get_all_styles, get_filter_by_name)
+    get_all_styles, get_filter_by_name, add_custom_style)
 
 
 pygments_cache.DEBUG = True
@@ -181,3 +181,13 @@ def test_get_filter_by_name(cache, name, cls):
     lexer = get_filter_by_name(name)
     obs = type(lexer)
     assert cls is obs
+
+
+@pytest.mark.parametrize('name, style', [
+    ('testmonokai', MonokaiStyle),
+    ('testmurphy', MurphyStyle),
+    ])
+def test_add_custom_style(name, style):
+    add_custom_style(name, style)
+    assert get_style_by_name(name) is style
+    assert name in get_all_styles()
