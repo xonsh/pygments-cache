@@ -18,7 +18,7 @@ import importlib
 
 
 # Global storage variables
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 CACHE = None
 CUSTOM_STYLES = {}
 DEBUG = False
