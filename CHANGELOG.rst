@@ -4,6 +4,15 @@ pygments-cache Change Log
 
 .. current developments
 
+v0.1.3
+====================
+
+**Added:**
+
+* ``add_custom_style()`` to be able to transparently use user defined styles (for xonsh/xonsh#3837)
+
+
+
 v0.1.2
 ====================
 
