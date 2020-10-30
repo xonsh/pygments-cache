@@ -289,9 +289,11 @@ def load_or_build():
         load(fname)
     else:
         import sys
-        print('pygments cache not found, building...', file=sys.stderr)
+        if DEBUG:
+            print('pygments cache not found, building...', file=sys.stderr)
         CACHE = build_cache()
-        print('...writing cache to ' + fname, file=sys.stderr)
+        if DEBUG:
+            print('...writing cache to ' + fname, file=sys.stderr)
         write_cache(fname)
 
 
